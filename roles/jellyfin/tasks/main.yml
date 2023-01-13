@@ -1,0 +1,94 @@
+---
+- name: Create /media/jellyfin/movies
+  ansible.builtin.file:
+    path: /media/jellyfin/movies
+    state: directory
+    mode: '0755'
+
+- name: Create /media/jellyfin/shows
+  ansible.builtin.file:
+    path: /media/jellyfin/shows
+    state: directory
+    mode: '0755'
+
+- name: Create /media/jellyfin/live
+  ansible.builtin.file:
+    path: /media/jellyfin/live
+    state: directory
+    mode: '0755'
+
+- name: Create /opt/jellyfin
+  ansible.builtin.file:
+    path: /opt/jellyfin
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose.yml file
+  ansible.builtin.copy:
+    src: ../files/docker-compose.yml
+    dest: /opt/jellyfin/docker-compose.yml
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: '0644'
+    backup: yes
+
+- name: Add User to Docker Group
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    groups:
+      - docker
+    append: yes
+
+- name: Install pip3
+  ansible.builtin.package:
+    name: "python3-pip"
+    state: present
+
+- name: Install Docker Python Module
+  ansible.builtin.pip:
+    name: docker
+    state: present
+
+- name: Install docker-compose Python Module
+  ansible.builtin.pip:
+    name: docker-compose
+    state: present
+
+- name: Pull Jeyllfin Docker Image
+  community.docker.docker_image:
+    name: jellyfin/jellyfin
+    source: pull
+
+- name: Docker Compose up Jellyfin
+  community.docker.docker_compose:
+    project_src: /opt/jellyfin
+    build: false
+    restarted: true
+
+- name: Allow Traffic on 8096/TCP
+  ansible.posix.firewalld:
+    port: 8096/tcp
+    permanent: yes
+    state: enabled
+    immediate: true
+
+- name: Allow Traffic on 8920/TCP
+  ansible.posix.firewalld:
+    port: 8920/tcp
+    permanent: yes
+    state: enabled
+    immediate: true
+
+- name: Allow Traffic on 1900/UDP
+  ansible.posix.firewalld:
+    port: 1900/udp
+    permanent: yes
+    state: enabled
+    immediate: true
+
+- name: Allow Traffic on 7359/UDP
+  ansible.posix.firewalld:
+    port: 7359/udp
+    permanent: yes
+    state: enabled
+    immediate: true

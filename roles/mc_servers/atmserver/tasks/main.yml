@@ -1,0 +1,93 @@
+---
+- name: Ensure Java 17 JRE Installed
+  ansible.builtin.package:
+    name: java-17-openjdk
+    state: latest
+
+- name: Create Minecraft Group
+  ansible.builtin.group:
+    name: minecraft
+    state: present
+
+- name: Create Minecraft User
+  ansible.builtin.user:
+    name: minecraft
+    comment: System account for running MC server daemon.
+    groups: minecraft
+    create_home: false
+    system: true
+    append: yes
+
+- name: Create /srv/minecraft directory
+  ansible.builtin.file:
+    path: /srv/minecraft
+    state: directory
+    mode: '0744'
+    owner: minecraft
+    group: minecraft
+
+- name: Create /srv/minecraft/server directory
+  ansible.builtin.file:
+    path: /srv/minecraft/server
+    state: directory
+    mode: '0744'
+    owner: minecraft
+    group: minecraft
+
+- name: Extract Server Files
+  ansible.builtin.unarchive:
+    src: ../files/server.tar
+    dest: /srv/minecraft/server/
+    owner: minecraft
+    group: minecraft
+    remote_src: no
+
+- name: Install Minecraft systemd Service
+  copy:
+    src: ../files/minecraft.service
+    dest: /etc/systemd/system/minecraft.service
+
+- name: Install Minecraft systemd Socket
+  copy:
+    src: ../files/minecraft.socket
+    dest: /etc/systemd/system/minecraft.socket
+
+- name: Install Minecraft sudoers file
+  copy:
+    src: ../files/minecraft.sudoers
+    dest: /etc/sudoers.d/minecraft.sudoers
+
+# - name: Copy SELinux Module
+#   copy:
+#     src: ../files/mc-systemd.te
+#     dest: /tmp/mc-systemd.te
+
+# - name: Create SELinux Module
+#   command: checkmodule -M -m -o /tmp/mc-systemd.mod /tmp/mc-systemd.te
+
+# - name: Create SELinux Module Binary
+#   command: semodule_package -o /tmp/mc-systemd.pp -m /tmp/mc-systemd.mod
+
+# - name: Install SELinux Module
+#   command: semodule -X 300 -i /tmp/mc-systemd.pp
+
+# - name: reload SELinux policy to ensure that ts3server is executable
+#   command: restorecon -irv /srv/minecraft/
+
+- name: Enabled Minecraft firewalld Service
+  ansible.posix.firewalld:
+    port: 25565/tcp
+    permanent: yes
+    state: enabled
+
+- name: Put SELinux in permissive mode, logging actions that would be blocked.
+  ansible.posix.selinux:
+    policy: targeted
+    state: permissive
+
+- name: Enable Minecraft Service
+  ansible.builtin.systemd:
+    name: minecraft.service
+    state: started
+    daemon_reload: yes
+    enabled: yes

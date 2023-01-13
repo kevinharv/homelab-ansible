@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>Minecraft</short>
+  <description>Minecraft Java Server firewall rule.</description>
+  <port protocol="tcp" port="25565"/>
+</service>

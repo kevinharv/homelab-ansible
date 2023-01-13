@@ -1,0 +1,145 @@
+---
+# TODO
+# - SELinux rules?
+# - Add server icon
+# - Set spigot.yml restart command (see comment)
+# - Fix SELinux Configuration (potentially enable cockpit to see what is happening)
+# - Re-write and customize
+# - Add firewalld add/remove MC to minecraft.sudoers file
+# - Add Preup Postdown firewall changes (just do with ports, don't bother with creating a service)
+
+- name: Ensure Java 17 JRE Installed
+  ansible.builtin.package:
+    name: java-17-openjdk
+    state: latest
+
+- name: Create Minecraft Group
+  ansible.builtin.group:
+    name: minecraft
+    state: present
+
+- name: Create Minecraft User
+  ansible.builtin.user:
+    name: minecraft
+    comment: System account for running MC server daemon.
+    groups: minecraft
+    create_home: false
+    system: true
+    append: yes
+
+- name: Create /srv/minecraft directory
+  ansible.builtin.file:
+    path: /srv/minecraft
+    state: directory
+    mode: '0744'
+    owner: minecraft
+    group: minecraft
+
+- name: Create /srv/minecraft/server directory
+  ansible.builtin.file:
+    path: /srv/minecraft/server
+    state: directory
+    mode: '0744'
+    owner: minecraft
+    group: minecraft
+
+- name: Download PaperMC Server
+  ansible.builtin.get_url:
+    url: "{{ papermc_server_url }}"
+    dest: /srv/minecraft/server/minecraft.jar
+
+- name: Copy Server Configuration Files
+  copy:
+    src: ../files/server/
+    dest: /srv/minecraft/server/
+    owner: minecraft
+    group: minecraft
+    directory_mode:
+
+- name: Install Minecraft systemd Service
+  copy:
+    src: ../files/minecraft.service
+    dest: /etc/systemd/system/minecraft.service
+
+- name: Install Minecraft systemd Socket
+  copy:
+    src: ../files/minecraft.socket
+    dest: /etc/systemd/system/minecraft.socket
+
+- name: Install Minecraft sudoers file
+  copy:
+    src: ../files/minecraft.sudoers
+    dest: /etc/sudoers.d/minecraft.sudoers
+
+
+# SELinux Module Creation and Installation
+# Copy Modules to System
+- name: Copy SELinux Module - sdchown
+  copy:
+    src: ../files/sdchown_local.te
+    dest: /tmp/sdchown_local.te
+
+- name: Copy SELinux Module - sh_socket
+  copy:
+    src: ../files/sh_socket_local.te
+    dest: /tmp/sh_socket_local.te
+
+- name: Copy SELinux Module - systemd_socket
+  copy:
+    src: ../files/systemd_socket_local.te
+    dest: /tmp/systemd_socket_local.te
+
+# Create Modules from Templates
+- name: Create SELinux Module - sdchown
+  command: checkmodule -M -m -o /tmp/sdchown_local.mod /tmp/sdchown_local.te
+
+- name: Create SELinux Module - sh_socket
+  command: checkmodule -M -m -o /tmp/sh_socket_local.mod /tmp/sh_socket_local.te
+
+- name: Create SELinux Module - systemd_socket
+  command: checkmodule -M -m -o /tmp/systemd_socket_local.mod /tmp/systemd_socket_local.te
+
+# Create Executables from Modules
+- name: Create SELinux Module Binary - sdchown
+  command: semodule_package -o /tmp/sdchown_local.pp -m /tmp/sdchown_local.mod
+
+- name: Create SELinux Module Binary - sh_socket
+  command: semodule_package -o /tmp/sh_socket_local.pp -m /tmp/sh_socket_local.mod
+
+- name: Create SELinux Module Binary - systemd_socket
+  command: semodule_package -o /tmp/systemd_socket_local.pp -m /tmp/systemd_socket_local.mod
+
+# Install Modules
+- name: Install SELinux Module - sdchown
+  command: semodule -i /tmp/sdchown_local.pp
+
+- name: Install SELinux Module - sh_socket
+  command: semodule -i /tmp/sh_socket_local.pp
+
+- name: Install SELinux Module - systemd_socket
+  command: semodule -i /tmp/systemd_socket_local.pp
+
+# END SELINUX CONFIG
+
+- name: Enabled Minecraft firewalld Service
+  ansible.posix.firewalld:
+    port: 25565/tcp
+    permanent: yes
+    state: enabled
+
+- name: Ensure SELinux is Enforcing
+  ansible.posix.selinux:
+    policy: targeted
+    state: enforcing
+
+- name: Enable Minecraft Service
+  ansible.builtin.systemd:
+    name: minecraft.service
+    state: stopped
+    daemon_reload: yes
+    enabled: yes
+
+# Reboot to allow SELinux to start with modules installed
+- name: Reboot System
+  ansible.builtin.reboot:
+    reboot_timeout: 360

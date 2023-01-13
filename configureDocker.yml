@@ -1,0 +1,20 @@
+---
+- hosts: prddock1
+  become: true
+
+  pre_tasks:
+    - name: Update Host
+      ansible.builtin.import_tasks: ./tasks/update.yml
+
+    # - name: Remove runc
+    #   ansible.builtin.package:
+    #     name: "runc"
+    #     state: absent
+
+  tasks:
+    - debug:
+        msg: Configuring PRDDOCK1 for Jellyfin
+  roles:
+  - docker
+  - jellyfin
+  - zap2xml

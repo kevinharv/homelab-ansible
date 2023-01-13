@@ -1,0 +1,10 @@
+module sdchown_local 1.0;
+
+require {
+        type init_t;
+        type var_t;
+        class fifo_file setattr;
+}
+
+#============= init_t ==============
+allow init_t var_t:fifo_file setattr;

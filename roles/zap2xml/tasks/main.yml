@@ -1,0 +1,52 @@
+---
+- name: Create /opt/xmltv
+  ansible.builtin.file:
+    path: /opt/xmltv
+    state: directory
+    mode: '0755'
+
+- name: Create /opt/xmltv/xmltvdata
+  ansible.builtin.file:
+    path: /opt/xmltv/xmltvdata
+    state: directory
+    mode: '0755'
+
+- name: Copy .env file
+  ansible.builtin.copy:
+    src: ../files/.env
+    dest: /opt/xmltv/.env
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: '0644'
+    backup: no
+
+- name: Copy docker-compose.yml file
+  ansible.builtin.copy:
+    src: ../files/docker-compose.yml
+    dest: /opt/xmltv/docker-compose.yml
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: '0644'
+    backup: no
+
+- name: Copy Dockerfile
+  ansible.builtin.copy:
+    src: ../files/Dockerfile
+    dest: /opt/xmltv/Dockerfile
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: '0644'
+    backup: no
+
+- name: Add User to Docker Group
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    groups:
+      - docker
+    append: yes
+
+- name: Docker Compose up XMLTV
+  community.docker.docker_compose:
+    project_src: /opt/xmltv
+    build: false
+    restarted: true

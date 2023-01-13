@@ -1,0 +1,36 @@
+# Title: Homelab Desired State System Configuration
+# Author: Kevin harvey
+# Date: 20221110
+# Description: Assigns the relevant roles to systems according to their purpose.
+# This playbook should be run after initial configuration and updates have been
+# performed on each system.
+---
+
+# - name: Update Systems
+#   import_playbook: ./tasks/update.yml
+
+- hosts: all
+  become: true
+  tasks:
+    - name: Update Systems
+      include_tasks: ./tasks/update.yml
+
+    - name: Install Docker Role
+      include_role:
+        name: docker
+      when: ansible_hostname == "prddock1"
+
+    - name: Install Jellyfin Role
+      include_role:
+        name: jellyfin
+      when: ansible_hostname == "prddock1"
+
+    - name: Install XMLTV Role
+      include_role:
+        name: zap2xml
+      when: ansible_hostname == "prddock1"
+
+    - name: Install Minecraft Role
+      include_role:
+        name: mc_servers/minecraft
+      when: ansible_hostname == "prdmc02"
