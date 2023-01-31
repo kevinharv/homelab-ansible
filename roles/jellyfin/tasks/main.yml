@@ -23,6 +23,18 @@
     state: directory
     mode: '0755'
 
+- name: Create /opt/xmltv
+  ansible.builtin.file:
+    path: /opt/xmltv
+    state: directory
+    mode: '0755'
+
+- name: Create /opt/xmltv/data
+  ansible.builtin.file:
+    path: /opt/xmltv/data
+    state: directory
+    mode: '0755'
+
 - name: Copy docker-compose.yml file
   ansible.builtin.copy:
     src: ../files/docker-compose.yml
@@ -32,12 +44,13 @@
     mode: '0644'
     backup: yes
 
-- name: Add User to Docker Group
-  ansible.builtin.user:
-    name: "{{ ansible_user_id }}"
-    groups:
-      - docker
-    append: yes
+# Should be done in main
+# - name: Add User to Docker Group
+#   ansible.builtin.user:
+#     name: "{{ ansible_user_id }}"
+#     groups:
+#       - docker
+#     append: yes
 
 - name: Install pip3
   ansible.builtin.package:
@@ -54,10 +67,10 @@
     name: docker-compose
     state: present
 
-- name: Pull Jeyllfin Docker Image
-  community.docker.docker_image:
-    name: jellyfin/jellyfin
-    source: pull
+# - name: Pull Jeyllfin Docker Image
+#   community.docker.docker_image:
+#     name: jellyfin/jellyfin
+#     source: pull
 
 - name: Docker Compose up Jellyfin
   community.docker.docker_compose:

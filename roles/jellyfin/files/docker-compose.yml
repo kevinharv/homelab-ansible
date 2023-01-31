@@ -11,7 +11,20 @@ services:
       - /media:/media
       - /opt/xmltv/xmltvdata:/xmltv
     restart: 'unless-stopped'
+  zap2xml:
+    container_name: zap2xml
+    image: ghcr.io/jef/zap2xml:latest
+    environment:
+      OPT_ARGS: >-
+        -I -D -C /config/.zap2xmlrc
+      SLEEPTIME: 21600 # 6 hours in seconds
+      TZ: America/Chicago
+    volumes:
+      - xmltvConfig:/config
+      - /opt/xmltv/data:/xmltv # nice for mapping other drives to this that may use xmltv.xml
+    restart: unless-stopped
 
 volumes:
   jellyfinCache:
   jellyfinConfig:
+  xmltvConfig:

@@ -38,12 +38,13 @@
     mode: '0644'
     backup: no
 
-- name: Add User to Docker Group
-  ansible.builtin.user:
-    name: "{{ ansible_user_id }}"
-    groups:
-      - docker
-    append: yes
+# Should be done in main
+# - name: Add User to Docker Group
+#   ansible.builtin.user:
+#     name: "{{ ansible_user_id }}"
+#     groups:
+#       - docker
+#     append: yes
 
 - name: Docker Compose up XMLTV
   community.docker.docker_compose:

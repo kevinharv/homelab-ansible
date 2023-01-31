@@ -5,31 +5,39 @@
 # This playbook should be run after initial configuration and updates have been
 # performed on each system.
 ---
-
-# - name: Update Systems
-#   import_playbook: ./tasks/update.yml
-
 - hosts: all
   become: true
+
+  vars_prompt:
+    - name: docker_user
+      prompt: "Enter User for Docker Group: "
+
   tasks:
     - name: Update Systems
       include_tasks: ./tasks/update.yml
 
+    # CONFIGURE DOCKER SYSTEMS
     - name: Install Docker Role
       include_role:
-        name: docker
-      when: ansible_hostname == "prddock1"
+        name: geerlingguy.docker
+      when: ansible_hostname == "prddock1" or ansible_hostname == "prddock2"
 
+    - name: Docker Group Modification
+      include_tasks: ./tasks/docker-group.yml
+      when: ansible_hostname == "prddock1" or ansible_hostname == "prddock2"
+
+    # DEPLOY DOCKER WORKLOADS
     - name: Install Jellyfin Role
       include_role:
         name: jellyfin
       when: ansible_hostname == "prddock1"
 
-    - name: Install XMLTV Role
-      include_role:
-        name: zap2xml
-      when: ansible_hostname == "prddock1"
+    # - name: Install XMLTV Role
+    #   include_role:
+    #     name: zap2xml
+    #   when: ansible_hostname == "prddock1"
 
+    # DEPLOY MINECRAFT WORKLOADS
     - name: Install Minecraft Role
       include_role:
         name: mc_servers/minecraft
