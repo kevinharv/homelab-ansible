@@ -1,0 +1,45 @@
+---
+- name: Install and configure Apache to serve web pages from home directories
+  hosts: all
+  become: yes
+
+  tasks:
+  - name: Install Apache HTTP server
+    package:
+      name: httpd
+      state: latest
+
+  - name: Start Apache HTTP server and enable it at boot
+    service:
+      name: httpd
+      state: started
+      enabled: yes
+
+  - name: Configure Apache to serve web pages from home directories
+    lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      regexp: '^#\s*UserDir\s+public_html'
+      line: 'UserDir public_html'
+    notify:
+      - restart apache
+
+  - name: Configure Apache to allow FollowSymLinks
+    lineinfile:
+      dest: /etc/httpd/conf/httpd.conf
+      regexp: '^#\s*Options\s+Indexes\s+FollowSymLinks\s+MultiViews'
+      line: 'Options Indexes FollowSymLinks MultiViews'
+    notify:
+      - restart apache
+
+  - name: Set SELinux context for home directories
+    command: "semanage fcontext -a -t httpd_sys_content_t '/home/[[:alnum:]_]+/public_html(/.*)?'"
+
+  - name: Update SELinux policy
+    command: restorecon -Rv /home
+
+  handlers:
+  - name: restart apache
+    service:
+      name: httpd
+      state: restarted
+
