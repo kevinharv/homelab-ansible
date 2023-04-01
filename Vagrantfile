@@ -5,8 +5,8 @@ Vagrant.configure("2") do |config|
   
     # Configure VM sizing
     config.vm.provider "virtualbox" do |v|
-      v.memory = 2048
-      v.cpus = 2
+      v.memory = 6144
+      v.cpus = 4
     end
 
     # Define PRDOVPN configuration
@@ -63,6 +63,19 @@ Vagrant.configure("2") do |config|
       prdmc02.vm.box = "generic/rocky9"
       prdmc02.vm.hostname = "prdmc02"
       prdmc02.vm.network :private_network, ip: "192.168.56.41"
+    end
+
+    # Define DEVKUBE1 configuration
+    config.vm.define "devkube1" do |devkube1|
+      devkube1.vm.box = "generic/rocky9"
+      devkube1.vm.hostname = "devkube1"
+      devkube1.vm.network :private_network, ip: "192.168.56.45"
+    end
+
+    config.vm.define "devkube2" do |devkube2|
+      devkube2.vm.box = "generic/rocky9"
+      devkube2.vm.hostname = "devkube2"
+      devkube2.vm.network :private_network, ip: "192.168.56.46"
     end
   end
   

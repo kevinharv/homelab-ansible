@@ -20,11 +20,10 @@ services:
       SLEEPTIME: 21600 # 6 hours in seconds
       TZ: America/Chicago
     volumes:
-      - xmltvConfig:/config
+      - /opt/jellyfin/xmltv:/config
       - /opt/xmltv/data:/xmltv # nice for mapping other drives to this that may use xmltv.xml
     restart: unless-stopped
 
 volumes:
   jellyfinCache:
   jellyfinConfig:
-  xmltvConfig:

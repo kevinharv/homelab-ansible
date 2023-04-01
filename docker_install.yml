@@ -1,0 +1,22 @@
+---
+- hosts: prddock2
+  become: true
+
+  # vars_prompt:
+  #   - name: docker_user
+  #     prompt: "Enter User for Docker Group: "
+
+  tasks:
+    - name: Update Systems
+      include_tasks: ./tasks/update.yml
+
+    # CONFIGURE DOCKER SYSTEMS
+    - name: Install Docker Role
+      include_role:
+        name: docker
+
+    - name: Add User to Docker Group
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes

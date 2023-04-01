@@ -23,15 +23,15 @@
     state: directory
     mode: '0755'
 
-- name: Create /opt/xmltv
-  ansible.builtin.file:
-    path: /opt/xmltv
-    state: directory
-    mode: '0755'
+# - name: Create /opt/xmltv
+#   ansible.builtin.file:
+#     path: /opt/xmltv
+#     state: directory
+#     mode: '0755'
 
-- name: Create /opt/xmltv/data
+- name: Create /opt/jellyfin/xmltv
   ansible.builtin.file:
-    path: /opt/xmltv/data
+    path: /opt/jellyfin/xmltv
     state: directory
     mode: '0755'
 
@@ -44,13 +44,21 @@
     mode: '0644'
     backup: yes
 
+- name: Copy XMLTV Config file
+  ansible.builtin.copy:
+    src: ../files/.zap2xmlrc
+    dest: /opt/jellyfin/xmltv/.zap2xmlrc
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: '0644'
+
 # Should be done in main
-# - name: Add User to Docker Group
-#   ansible.builtin.user:
-#     name: "{{ ansible_user_id }}"
-#     groups:
-#       - docker
-#     append: yes
+- name: Add User to Docker Group
+  ansible.builtin.user:
+    name: "{{ ansible_user_id }}"
+    groups:
+      - docker
+    append: yes
 
 - name: Install pip3
   ansible.builtin.package:

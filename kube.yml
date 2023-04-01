@@ -1,0 +1,98 @@
+---
+- name: Install Kubernetes on RHEL 8
+  hosts: devkube1
+  become: true
+  vars:
+    kube_version: "1.26.3"
+    pod_cidr: "10.244.0.0/16"
+    service_cidr: "10.96.0.0/12"
+  tasks:
+    - name: Install required packages
+      dnf:
+        name:
+          - yum-utils
+          - device-mapper-persistent-data
+          - lvm2
+        state: present
+
+    - name: Add Docker CE repository
+      yum_repository:
+        name: docker-ce
+        description: "Docker CE Repository"
+        baseurl: https://download.docker.com/linux/centos/8/x86_64/stable/
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://download.docker.com/linux/centos/gpg
+        state: present
+
+    # - name: Upgrade RHEL/CentOS Distribution
+    #   dnf:
+    #     name: "kernel"
+    #     state: latest
+
+    # # Upgrade Packages
+    # - name: Upgrade All Packages
+    #   package:
+    #     name: "*"
+    #     state: latest
+
+    - name: Install Docker CE
+      dnf:
+        name:
+          - docker-ce 
+          - docker-ce-cli 
+          - containerd.io 
+          - docker-buildx-plugin 
+          - docker-compose-plugin
+        state: present
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add Kubernetes repository
+      yum_repository:
+        name: kubernetes
+        description: "Kubernetes Repository"
+        baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+        enabled: true
+        gpgcheck: true
+        gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+        state: present
+
+    - name: Install Kubernetes components
+      dnf:
+        name:
+          - kubelet-{{ kube_version }}
+          - kubeadm-{{ kube_version }}
+          - kubectl-{{ kube_version }}
+        state: present
+
+    - name: Enable kubelet service
+      systemd:
+        name: kubelet
+        state: started
+        enabled: true
+
+    - name: Firewall changes
+      ansible.posix.firewalld:
+        port:
+          - 6443/tcp 
+          - 10250/tcp
+        permanent: yes
+        state: enabled
+
+    # Delete /etc/containerd/config.toml
+    # Restart containerd
+
+    - name: Initialize Kubernetes cluster
+      command: kubeadm init --pod-network-cidr={{ pod_cidr }} --service-cidr={{ service_cidr }}
+
+    - name: Copy Kubernetes configuration to user's home directory
+      command: mkdir -p $HOME/.kube && sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && sudo chown $(id -u):$(id -g) $HOME/.kube/config
+      become_user: "{{ ansible_user }}"
+
+    - name: Install Flannel network plugin
+      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
