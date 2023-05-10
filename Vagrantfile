@@ -37,13 +37,6 @@ Vagrant.configure("2") do |config|
       prdnetlmg.vm.network :private_network, ip: "192.168.56.30"
     end
 
-    # Define PRDGNS3 configuration
-    config.vm.define "prdgns3" do |prdgns3|
-      prdgns3.vm.box = "generic/ubuntu2004"
-      prdgns3.vm.hostname = "prdgns3"
-      prdgns3.vm.network :private_network, ip: "192.168.56.31"
-    end
-
     # Define PRDFS01 configuration
     config.vm.define "prdfs01" do |prdfs01|
       prdfs01.vm.box = "generic/rocky9"

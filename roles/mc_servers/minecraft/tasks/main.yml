@@ -1,12 +1,10 @@
 ---
 # TODO
-# - SELinux rules?
 # - Add server icon
 # - Set spigot.yml restart command (see comment)
-# - Fix SELinux Configuration (potentially enable cockpit to see what is happening)
 # - Re-write and customize
 # - Add firewalld add/remove MC to minecraft.sudoers file
-# - Add Preup Postdown firewall changes (just do with ports, don't bother with creating a service)
+# - Add Preup Postdown firewall changes (just do with ports, don't bother with creating a service right?)
 
 - name: Ensure Java 17 JRE Installed
   ansible.builtin.package:
