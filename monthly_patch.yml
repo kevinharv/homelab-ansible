@@ -1,10 +1,10 @@
 ---
-- name: Update Packages and Distribution on Debian/Ubuntu and RHEL/CentOS Hosts
+- name: Update Homelab VMs 
   hosts: all
   become: true
   tasks:
   # Must update apt cache on Debian hosts to get up to date packages
-  - name: Update apt repo and package cache
+  - name: Update APT Repos/Cache
     apt:
       update_cache: yes
       force_apt_get: yes
@@ -31,13 +31,13 @@
       state: latest
 
   # Reboot servers if necessary
-  - name: Check hosts for required reboot
+  - name: Flag Servers for Reboot
     register: reboot_required_file_existence
     stat: path=/var/run/reboot-required get_md5=no
 
-  - name: Reboot servers if needed
+  - name: Reboot Servers
     reboot:
-      msg: "Rebooting the servers after applying Kernel Updates"
+      msg: "System Reboot Required: Restarting"
       connect_timeout: 5
       reboot_timeout: 300
       pre_reboot_delay: 0
@@ -45,5 +45,4 @@
       test_command: uptime
     when: 
       - reboot_required_file_existence.stat.exists
-      - ansible_hostname != 'vm-ovpn'
-      - ansible_hostname != 'prox1'
+      - ansible_hostname != 'ovpn'
